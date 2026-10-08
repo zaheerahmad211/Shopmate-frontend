@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -32,18 +33,43 @@ const Register = () => {
   const [selectedRole, setSelectedRole] = useState('user');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const { register, verifyOtp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
     setError('');
-    const result = await register(name, email, password, selectedRole);
+
+    // Validate name before sending request
+    const nameRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+
+    if (!name.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    if (!nameRegex.test(name.trim())) {
+      setError('Please enter a valid name using letters only. Example: Ahmed Ali');
+      return;
+    }
+
+    setLoading(true);
+
+    const result = await register(
+      name.trim(),
+      email,
+      password,
+      selectedRole
+    );
+
     setLoading(false);
+
     if (result.success) {
       setTempToken(result.tempToken);
       setStep('otp');
+
       if (result.otp) {
         setOtp(result.otp); // Auto-fill for development
       }
@@ -54,10 +80,14 @@ const Register = () => {
 
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
+
     setLoading(true);
     setError('');
+
     const result = await verifyOtp(tempToken, otp);
+
     setLoading(false);
+
     if (result.success) {
       if (selectedRole === 'seller') {
         navigate('/seller');
@@ -374,14 +404,18 @@ const Register = () => {
         <div className="reg-card">
           <div className="reg-header">
             <h1 className="reg-title">Create Account</h1>
-            <p className="reg-subtitle">Join our marketplace — choose your role to get started</p>
+            <p className="reg-subtitle">
+              Join our marketplace — choose your role to get started
+            </p>
           </div>
 
           {/* Role Selection */}
           <p className="role-section-label">I want to join as</p>
+
           <div className="role-cards">
             {roles.map((role) => {
               const isActive = selectedRole === role.id;
+
               return (
                 <div
                   key={role.id}
@@ -391,8 +425,12 @@ const Register = () => {
                 >
                   <div
                     className="role-bg"
-                    style={{ background: role.gradient, opacity: isActive ? 0.12 : 0 }}
+                    style={{
+                      background: role.gradient,
+                      opacity: isActive ? 0.12 : 0,
+                    }}
                   />
+
                   {isActive && (
                     <div
                       className="check-badge"
@@ -401,10 +439,18 @@ const Register = () => {
                       ✓
                     </div>
                   )}
+
                   <span className="role-icon">{role.icon}</span>
-                  <span className="role-label" style={{ color: isActive ? role.color : '#fff' }}>
+
+                  <span
+                    className="role-label"
+                    style={{
+                      color: isActive ? role.color : '#fff',
+                    }}
+                  >
                     {role.label}
                   </span>
+
                   <p className="role-desc">{role.description}</p>
                 </div>
               );
@@ -413,17 +459,20 @@ const Register = () => {
 
           <div className="divider" />
 
-          {/* Form */}
+          {/* Error */}
           {error && (
             <div className="error-box">
-              <span>⚠️</span> {error}
+              <span>⚠️</span>
+              {error}
             </div>
           )}
 
           {step === 'register' ? (
             <form onSubmit={handleSubmit}>
+              {/* Name */}
               <div className="form-group">
                 <label className="form-label">Full Name</label>
+
                 <input
                   id="reg-name"
                   type="text"
@@ -431,12 +480,16 @@ const Register = () => {
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  pattern="[A-Za-z]+( [A-Za-z]+)*"
+                  title="Please enter a valid name using letters only"
                   required
                 />
               </div>
 
+              {/* Email */}
               <div className="form-group">
                 <label className="form-label">Email Address</label>
+
                 <input
                   id="reg-email"
                   type="email"
@@ -448,8 +501,10 @@ const Register = () => {
                 />
               </div>
 
+              {/* Password */}
               <div className="form-group">
                 <label className="form-label">Password</label>
+
                 <input
                   id="reg-password"
                   type="password"
@@ -469,13 +524,17 @@ const Register = () => {
                 disabled={loading}
               >
                 {loading && <span className="spinner" />}
-                {loading ? 'Creating Account...' : `Register as ${activeRole.label}`}
+
+                {loading
+                  ? 'Creating Account...'
+                  : `Register as ${activeRole.label}`}
               </button>
             </form>
           ) : (
             <form onSubmit={handleOtpSubmit}>
               <div className="form-group">
                 <label className="form-label">Verify OTP</label>
+
                 <input
                   type="text"
                   className="form-input"
@@ -485,10 +544,21 @@ const Register = () => {
                   maxLength={6}
                   required
                 />
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.75rem', lineHeight: '1.4' }}>
-                  A verification code has been sent to your email address (<b>{email}</b>). Please check your inbox and spam folder.
+
+                <p
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginTop: '0.75rem',
+                    lineHeight: '1.4',
+                  }}
+                >
+                  A verification code has been sent to your email address (
+                  <b>{email}</b>
+                  ). Please check your inbox and spam folder.
                 </p>
               </div>
+
               <button
                 type="submit"
                 className="submit-btn"
@@ -496,7 +566,10 @@ const Register = () => {
                 disabled={loading}
               >
                 {loading && <span className="spinner" />}
-                {loading ? 'Verifying...' : 'Verify Email & Create Account'}
+
+                {loading
+                  ? 'Verifying...'
+                  : 'Verify Email & Create Account'}
               </button>
             </form>
           )}
@@ -511,3 +584,4 @@ const Register = () => {
 };
 
 export default Register;
+
